@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 using namespace std;
-int main()
+int mai
 {
     cout<<"Hello World !"<<endl;
     
