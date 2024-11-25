@@ -1,4 +1,4 @@
-/*#include "qrcodedialog.h"
+/* #include "qrcodedialog.h"
 #include "ui_qrcodedialog.h"
 
 #include <QMessageBox>
@@ -88,5 +88,4 @@ void QRCodeDialog::on_pushButton_clicked()
 {
     close();
 }
-
 */
