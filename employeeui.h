@@ -3,7 +3,7 @@
 #include <QDialog>
 #include "employee.h"
 #include "congee.h"
-
+#include <QSerialPort>
 namespace Ui {
 class employeeUI;
 }
@@ -56,12 +56,12 @@ private slots:
     void on_ExportationButton_clicked();
 
     void on_pushButton_22_clicked();
-
+    void closeSerialPort();
 private:
     Ui::employeeUI *ui;
     congee *c;
     employee e;
-
+    QSerialPort *serial;
 
 };
 
