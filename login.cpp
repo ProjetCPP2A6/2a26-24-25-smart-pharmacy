@@ -5,36 +5,90 @@
 #include"employee.h"
 #include "employeeui.h"
 #include <QInputDialog>
+#include <QIntValidator>
 int login::Idg=0;
 login::login(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::login)
+    QDialog(parent),    // Initialisation du parent
+    ui(new Ui::login),  // Initialisation de l'interface utilisateur
+    serial(new QSerialPort(this))  // Initialisation du port série
 {
     ui->setupUi(this);
+    openSerialPort(); // Ouvrir le port série dès le début
+    ui->line_id->setValidator(new QIntValidator(0,99999999, this));
 }
 
 login::~login()
 {
+    closeSerialPort();
+    delete serial;
     delete ui;
+}
+void login::openSerialPort() {
+
+    if (!serial->isOpen()) {
+            serial->setPortName("COM3");  // Changez ce port selon votre système
+            serial->setBaudRate(QSerialPort::Baud9600);
+            serial->setDataBits(QSerialPort::Data8);
+            serial->setParity(QSerialPort::NoParity);
+            serial->setStopBits(QSerialPort::OneStop);
+            serial->setFlowControl(QSerialPort::NoFlowControl);
+
+            qDebug() << "Tentative d'ouverture du port série COM3";
+
+            if (serial->open(QIODevice::ReadOnly)) {
+                connect(serial, &QSerialPort::readyRead, this, &login::readSerialData);
+                qDebug() << "Port série ouvert avec succès.";
+            } else {
+                QMessageBox::warning(this, tr("Erreur"), tr("Impossible d'ouvrir le port série."));
+                qDebug() << "Erreur lors de l'ouverture du port série: " << serial->errorString();
+            }
+        }
+}
+
+void login::closeSerialPort() {
+    if (serial && serial->isOpen()) {
+           serial->close();
+           qDebug() << "Port série fermé avec succès.";
+       }
+
 }
 void login::clrinput(){
     ui->line_id->setText("");
     ui->line_password->setText("");
 
 }
+bool isArduinoInput = false;
+void login::readSerialData()
+{
+    if (serial && serial->isOpen()) {
+            QByteArray data = serial->readAll();
+            // Convertir en chaîne et l'insérer dans le champ 'line_id'
+            ui->line_id->insert(QString::fromLatin1(data));  // Utilisation de fromLatin1() pour garantir que le texte est bien interprété
+            isArduinoInput = true;  // Indique que l'ID a été entré via Arduino
+        } else {
+            qDebug() << "Port série non ouvert, impossible de lire les données.";
+        }
+}
+void login::resetFields() {
+    ui->line_id->clear();  // Effacer le champ de l'ID
+    ui->line_id->setFocus();  // Mettre le focus sur le champ de l'ID
+}
 void login::on_pushButton_3_clicked()
 {
-    // Récupération de l'ID et du mot de passe depuis les champs de texte
         int idd = ui->line_id->text().toInt();
-        Idg = idd; // Variable globale si nécessaire
         QString password = ui->line_password->text();
 
-        // Requête SQL pour vérifier si l'employé existe avec l'ID et récupérer son poste et mot de passe
+        // Vérification si un mot de passe est nécessaire
+        if (!isArduinoInput && password.isEmpty()) {
+            QMessageBox::critical(nullptr, QObject::tr("Erreur"),
+                                  QObject::tr("Veuillez entrer un mot de passe."), QMessageBox::Cancel);
+            return;
+        }
+
         QSqlQuery query;
         query.prepare("SELECT post, password FROM employee WHERE id = :id");
         query.bindValue(":id", idd);
 
-        // Exécution de la requête et vérification si l'ID existe
         if (!query.exec() || !query.next()) {
             QMessageBox::critical(nullptr, QObject::tr("Non valide"),
                                   QObject::tr("Cet ID n'existe pas.\n"
@@ -42,8 +96,8 @@ void login::on_pushButton_3_clicked()
             return;
         }
 
-        // Vérifier si l'employé a le poste "Ressources humaines"
         QString post = query.value("post").toString();
+
         if (post != "Ressources humaines") {
             QMessageBox::critical(nullptr, QObject::tr("Non valide"),
                                   QObject::tr("Seuls les employés des Ressources humaines peuvent accéder.\n"
@@ -51,27 +105,28 @@ void login::on_pushButton_3_clicked()
             return;
         }
 
-        // Vérifier si le mot de passe est correct
-        QString storedPassword = query.value("password").toString();
-        if (storedPassword != password) {
+        // Gestion des accès via Arduino ou manuellement
+        if (isArduinoInput || query.value("password").toString() == password) {
+            clrinput();  // Réinitialiser les champs de saisie
+
+            QMessageBox::information(nullptr, QObject::tr("Valide"),
+                                     QObject::tr("Accès autorisé : Bienvenue.\n"
+                                                 "Cliquez sur Annuler pour quitter."), QMessageBox::Cancel);
+
+            // Fermer le port série avant de passer à la prochaine fenêtre
+            closeSerialPort();
+
+            // Ouvrir la fenêtre principale (employeeUI)
+            ma = new employeeUI(this);
+            ma->show();
+
+            // Masquer la fenêtre de connexion au lieu de la fermer
+            hide();
+        } else {
             QMessageBox::critical(nullptr, QObject::tr("Non valide"),
                                   QObject::tr("Mot de passe incorrect.\n"
                                               "Cliquez sur Annuler pour quitter."), QMessageBox::Cancel);
-            return;
         }
-
-        // Si toutes les conditions sont remplies, accès autorisé
-        clrinput();
-        QMessageBox::information(nullptr, QObject::tr("Valide"),
-                                  QObject::tr("Accès autorisé : Bienvenue.\n"
-                                              "Cliquez sur Annuler pour quitter."), QMessageBox::Cancel);
-
-        // Ouvrir la fenêtre principale
-        ma = new employeeUI(this);
-        ma->show();
-        this->close();  // Ferme la fenêtre de login
-
-
 }
 
 void login::on_forgotPasswordButton_clicked()
