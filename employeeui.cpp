@@ -6,11 +6,14 @@
 #include "congee.h"
 #include "login.h"
 #include <QtCharts>
+#include <QSerialPort>
+#include <QIntValidator>
 employeeUI::employeeUI(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::employeeUI)
 {
     ui->setupUi(this);
+    ui->id->setValidator(new QIntValidator(10000000, 99999999, this));
     connect(ui->lineEdit_recherche, &QLineEdit::textChanged, this, &employeeUI::on_lineEdit_recherche_textChanged);
     ui->tableView->setModel(e.afficher());
     connect(ui->pushButton_22, &QPushButton::clicked, this, &employeeUI::on_pushButton_22_clicked);
@@ -41,8 +44,7 @@ void employeeUI::clrinput(){
 
 void employeeUI::on_ajouter_clicked()
 {
-    // Vérification des champs obligatoires (hors mot de passe)
-        if (ui->id->text().isEmpty() ||
+    if (ui->id->text().isEmpty() ||
             ui->nom->text().isEmpty() ||
             ui->prenom->text().isEmpty() ||
             ui->comboBox->currentText().isEmpty() ||
@@ -52,41 +54,35 @@ void employeeUI::on_ajouter_clicked()
             return;
         }
 
-        // Récupération des valeurs
         QString idText = ui->id->text();
-        int id = idText.toInt();
         QString nom = ui->nom->text();
         QString prenom = ui->prenom->text();
         QString post = ui->comboBox->currentText();
-        QString sexe = ui->sexe->text().toLower(); // Convertir en minuscules pour simplifier la vérification
+        QString sexe = ui->sexe->text().toLower();
         float salaire = ui->salaire->text().toFloat();
         QString password = ui->password->text();
 
-        // Vérification de la validité de l'ID (exactement 8 chiffres)
+        // Vérification supplémentaire pour l'ID (si nécessaire)
         if (idText.length() != 8 || !idText.toUInt()) {
             QMessageBox::warning(this, tr("Erreur de saisie"), tr("L'ID doit contenir exactement 8 chiffres."));
             return;
         }
 
-        // Vérification du sexe (doit être "homme" ou "femme")
         if (sexe != "homme" && sexe != "femme") {
             QMessageBox::warning(this, tr("Erreur de saisie"), tr("Le sexe doit être 'homme' ou 'femme'."));
             return;
         }
 
-        // Vérification de la validité du salaire
         if (salaire < 0) {
             QMessageBox::warning(this, tr("Erreur de saisie"), tr("Le salaire doit être un nombre positif."));
             return;
         }
 
-        // Vérification du mot de passe pour "Ressources humaines"
         if (post == "Ressources humaines" && password.isEmpty()) {
             QMessageBox::warning(this, tr("Erreur de saisie"), tr("Le mot de passe est obligatoire pour le poste 'Ressources humaines'."));
             return;
         }
 
-        // Vérification que le mot de passe n'est pas identique pour un autre employé dans "Ressources humaines"
         if (post == "Ressources humaines") {
             QSqlQuery query;
             query.prepare("SELECT COUNT(*) FROM employee WHERE post = 'Ressources humaines' AND password = :password");
@@ -103,21 +99,19 @@ void employeeUI::on_ajouter_clicked()
             }
         }
 
-        // Vérification que le mot de passe ne soit pas rempli pour les autres postes
         if (post != "Ressources humaines" && !password.isEmpty()) {
             QMessageBox::warning(this, tr("Erreur de saisie"), tr("Le mot de passe ne doit pas être rempli pour ce poste."));
             return;
         }
 
-        // Création et ajout de l'employé
-        employee e(id, nom, prenom, post, sexe, salaire, password);
+        employee e(idText.toInt(), nom, prenom, post, sexe, salaire, password);
         bool test = e.Ajouter();
         if (test) {
-            ui->tableView->setModel(e.afficher()); // Mise à jour de l'affichage
-            clrinput(); // Réinitialisation des champs
+            ui->tableView->setModel(e.afficher());
+            clrinput();
         } else {
             QMessageBox::critical(this, tr("Erreur !!"), tr("Impossible d'ajouter l'employé."), QMessageBox::Cancel);
-            clrinput(); // Réinitialisation des champs en cas d'erreur
+            clrinput();
         }
 }
 
@@ -497,16 +491,34 @@ void employeeUI::on_ExportationButton_clicked()
                                  QObject::tr("PDF Enregistré!.\n" "Cliquez sur OK pour continuer."),
                                  QMessageBox::Ok);
 }
-
+void employeeUI::closeSerialPort()
+{
+    if (serial && serial->isOpen()) {
+          qDebug() << "Fermeture du port série";
+          serial->close();
+      } else {
+          qDebug() << "Le port série est déjà fermé ou non initialisé";
+      }
+}
 void employeeUI::on_pushButton_22_clicked()
 {
-    // Créer une instance de l'interface login
-        login *loginWindow = new login();  // Si votre classe s'appelle "login", sinon remplacez-le par "loginUI"
+    // Affichage du message de confirmation de déconnexion
+        QMessageBox::StandardButton reply = QMessageBox::question(this, "Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?",
+                                                                  QMessageBox::Yes | QMessageBox::No);
+        if (reply == QMessageBox::Yes) {
+            // Fermer l'interface actuelle (employeeUI)
+            this->close();
 
-        // Afficher l'interface login
-        loginWindow->show();
+            // Créer une nouvelle instance de la fenêtre de login
+            login *loginWindow = new login();
+            loginWindow->show();  // Ouvrir la fenêtre de login
 
-        // Fermer l'interface actuelle (employeeUI)
-        this->close();
+            // Réinitialiser les champs de saisie dans la fenêtre login
+            loginWindow->resetFields();  // Réinitialiser l'ID et le mot de passe dans login
+
+            // Optionnel : pour éviter que la fenêtre de login ne reste en arrière-plan
+            loginWindow->raise();
+            loginWindow->activateWindow();
+        }
 }
 
