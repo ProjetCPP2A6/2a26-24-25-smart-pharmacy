@@ -9,7 +9,7 @@
 #include <QFileDialog>
 #include <QtDebug>
 #include <QImage>
-#include <QPainter>
+
 #include <QPixmap>
 #include "qrcode.h"
 #include "sms.h"
@@ -19,21 +19,39 @@
 #include <QColor>
 #include <QBrush>
 #include <QPen>
+#include <QSerialPort>
+#include <QSerialPortInfo>
+
 
 fournisseurUI::fournisseurUI(QWidget *parent)
-    : QDialog(parent)
-    , ui(new Ui::fournisseurUI)
+    : QDialog(parent),
+      ui(new Ui::fournisseurUI), // Initialize the UI pointer
+      serial(new QSerialPort(this)), // Initialize the serial port
+      f() // Correctly initialize `f`
 {
     ui->setupUi(this);
 
+    // Initialize the serial port
+    setupSerial();
 
-
+    // Connect serial port signals to slots
+    connect(serial, &QSerialPort::readyRead, this, &fournisseurUI::readWeight);
 }
+
+
+
+
+
+
 
 fournisseurUI::~fournisseurUI()
-{
+{    if (serial->isOpen()) {
+        serial->close();
+    }
+    delete serial;
     delete ui;
 }
+
 
 void fournisseurUI::showEvent(QShowEvent *event)
 {
@@ -50,6 +68,8 @@ void fournisseurUI::on_ajouter_clicked()
     int quantite = ui->quantite->text().toInt();
     QString produit = ui->produit->text();
 
+
+
     fournisseur f(nom, adresse, code, produit, contact, quantite);
     bool test;
 
@@ -60,7 +80,7 @@ void fournisseurUI::on_ajouter_clicked()
 
         // Send SMS
         sms s;
-        s.sendSMS("+21651928110", welcomeMessage);
+       /* s.sendSMS("+21651928110", welcomeMessage);*/
 
         QMessageBox::information(nullptr, QObject::tr("Ajout Réussi"),
                                       QObject::tr("Fournisseur ajouté avec succès !"), QMessageBox::Cancel);
@@ -75,6 +95,65 @@ void fournisseurUI::on_ajouter_clicked()
 
 
 }
+void fournisseurUI::setupSerial()
+{
+    serial->setPortName("COM3");  // Change to the appropriate port for your system
+        serial->setBaudRate(QSerialPort::Baud57600);  // Set the baud rate to match Arduino (57600)
+        serial->setDataBits(QSerialPort::Data8);
+        serial->setParity(QSerialPort::NoParity);
+        serial->setStopBits(QSerialPort::OneStop);
+        serial->setFlowControl(QSerialPort::NoFlowControl);
+
+        if (!serial->open(QIODevice::ReadWrite)) {
+            qDebug() << "Failed to open serial port!";
+            ui->statusLabel->setText("Error: Serial port not connected");
+        } else {
+            qDebug() << "Arduino connected!";
+            ui->statusLabel->setText("Arduino connected");
+        }
+}
+void fournisseurUI::readData()
+{
+    if (!serial->isOpen()) {
+            qDebug() << "Serial port is not open!";
+            ui->statusLabel->setText("Error: Serial port not open");
+            return;
+        }
+
+        QByteArray data = serial->readLine();
+        if (data.isEmpty()) {
+            qDebug() << "No data received";
+            ui->statusLabel->setText("No data received");
+        } else {
+            qDebug() << "Data received: " << data;
+            // Process data as needed
+        }
+}
+void fournisseurUI::readWeight()
+{
+    // Read all available data from the serial buffer
+        QByteArray data = serial->readAll();
+        QString weightString = QString::fromUtf8(data).trimmed();  // Convert to QString and trim whitespace
+
+        qDebug() << "Received data:" << weightString;
+
+        // Check if the data contains a unit like "grams" or "kg" and extract the numeric part
+        if (weightString.contains("grams") || weightString.contains("kg")) {
+            weightString = weightString.split(" ")[0];  // Get the numeric part
+        }
+
+        // Convert the string to a float and check validity
+        bool ok;
+        float weightValue = weightString.toFloat(&ok);
+
+        if (ok && weightValue >= 0) {  // Update the label only for valid, non-negative weights
+            ui->labelWeight->setText("Current Weight: " + QString::number(weightValue, 'f', 2) + " kg");
+        } else {
+            ui->labelWeight->setText("Invalid weight received");
+            qDebug() << "Invalid data received:" << weightString;  // Debug invalid data
+        }
+    }
+
 
 
 void fournisseurUI::on_modifier_clicked()
@@ -85,6 +164,7 @@ void fournisseurUI::on_modifier_clicked()
         int contact = ui->contact->text().toInt();
         int quantite = ui->quantite->text().toInt();
         QString produit = ui->produit->text();
+
 
         // Validate input
         if (code.isEmpty() || nom.isEmpty() || adresse.isEmpty() || produit.isEmpty()) {
@@ -541,4 +621,98 @@ void fournisseurUI::on_retour_2_clicked()
     // Retour à la page principale ou précédente (index 0)
     ui->stackedWidget->setCurrentIndex(0);
 }
+void fournisseurUI::onSerialDataReceived()
+{
+    // Check if data is available in the serial buffer
+    QByteArray data = serial->readAll();
+
+    // Convert the data to a string (assumes the data is sent as a string)
+    QString weightData = QString::fromUtf8(data);
+
+    // Optional: Trim any extra whitespace or line breaks
+    weightData = weightData.trimmed();
+
+    // Check if the received data is a valid number
+    bool ok;
+    int weight = weightData.toInt(&ok);
+
+    if (ok) {
+        // Update the label with the received weight
+        ui->labelWeight->setText("Poids: " + QString::number(weight) + " kg");
+    } else {
+        // Handle the case when the data is invalid or not a number
+        ui->labelWeight->setText("Poids: Données invalides");
+    }
+}
+
+
+void fournisseurUI::on_connectArduino_clicked()
+{
+    ui->connectArduino->setEnabled(false);
+        ui->statusLabel->setText("Connecting to Arduino...");
+
+        if (!serial->isOpen()) {
+            serial->setPortName("COM3");  // Adjust port name as needed
+            serial->setBaudRate(QSerialPort::Baud9600);
+            serial->setDataBits(QSerialPort::Data8);
+            serial->setParity(QSerialPort::NoParity);
+            serial->setStopBits(QSerialPort::OneStop);
+            serial->setFlowControl(QSerialPort::NoFlowControl);
+
+            if (serial->open(QIODevice::ReadWrite)) {
+                qDebug() << "Arduino connected!";
+                ui->statusLabel->setText("Arduino connected!");
+            } else {
+                qDebug() << "Failed to open serial port!";
+                ui->statusLabel->setText("Failed to connect to Arduino!");
+                return;
+            }
+        }
+    }
+
+
+
+
+void fournisseurUI::on_saveWeightButton_clicked()
+{
+    QString fournisseurCode = ui->lineEditFournisseurCode->text();  // Get the code from the input field
+       if (fournisseurCode.isEmpty()) {
+           ui->statusLabel->setText("Please enter a fournisseur code.");
+           return;
+       }
+
+       QString weightText = ui->labelWeight->text();  // Example: "Current Weight: 10.28 kg"
+       qDebug() << "Weight label text: " << weightText;  // Debug the weight label content
+
+       QStringList parts = weightText.split(":");  // Split the label text at ":"
+       if (parts.size() < 2) {
+           ui->statusLabel->setText("Invalid weight format.");
+           return;
+       }
+
+       // Extract the numeric part and remove any trailing spaces or "kg"
+       QString weightString = parts[1].split("kg")[0].trimmed();
+       bool ok;
+       float weightValue = weightString.toFloat(&ok);  // Convert the string to float
+
+       if (!ok || weightValue <= 0) {
+           ui->statusLabel->setText("Invalid weight data.");
+           return;
+       }
+
+       // Prepare the SQL query to save the weight to the database
+       QSqlQuery query;
+       query.prepare("UPDATE fournisseur SET poids = :poids WHERE code = :code");
+       query.bindValue(":poids", weightValue);  // Bind weight as a float
+       query.bindValue(":code", fournisseurCode);  // Bind the fournisseur code
+
+       if (query.exec()) {
+           ui->statusLabel->setText("Weight saved successfully!");
+           qDebug() << "Weight saved for fournisseur code" << fournisseurCode;
+       } else {
+           ui->statusLabel->setText("Failed to save weight.");
+           qDebug() << "Error saving weight:" << query.lastError().text();  // Print more detailed error
+       }
+}
+
 
