@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/img32">
+        <file>images1ring.png</file>
+    </qresource>
+</RCC>

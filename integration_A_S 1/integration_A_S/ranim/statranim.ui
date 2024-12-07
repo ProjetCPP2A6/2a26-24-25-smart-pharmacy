@@ -1,0 +1,860 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>statranim</class>
+ <widget class="QDialog" name="statranim">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>919</width>
+    <height>601</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">* {
+    color: #000;
+    border: none;
+}
+
+#centralwidget {
+    background-color: #eff99fe;
+}
+
+#leftmenu {
+    background-color: #2596be;
+}
+
+QLineEdit {
+    background: transparent;
+}
+
+QFrame {
+    border-radius: 10px;
+    border: 2px solid #2596be;
+}
+
+QLabel {
+    color: #2596be;
+}
+
+#employe_2 {
+    background-color: #cecece;
+}
+
+#lineEdit_2 {
+    background: transparent;
+}
+
+#label_22, #label_4, #label_17, #label_6, #label_7, #label_8, #label_9, #label_10 ,#label_18,#label_19,#label_15,#label_16,#label_20,#label_21,#label_14{
+    color: #000;
+    border: #000;
+}
+
+#lineEdit_3, #code,#nom, #adresse, #contact, #quantite, #produit {
+    background: #ffffff;
+}
+
+#pushButton_7, #pushButton_8, #ajouter, #modifier,#qrcode {
+    border-radius: 10px;
+    border: 3px solid #2596be;
+}
+
+
+#label_11, #label_12, #label_23,#label_13 {
+    border: #000;
+}
+
+#frame_4, #frame_8 {
+    border-radius: 10px;
+    border: 1px solid #2596be;
+}
+
+#LineEdit_10 {
+    background: #CECECE;
+}
+
+#widget_3 {
+    background-color: #fefeff;
+}
+
+#mainbody {
+    background-color: #ffffff;
+}
+
+#tableView_f {
+    background-color: #2596be;
+}
+
+#lineEdit_supp {
+    border-radius: 6px;
+    border: 1px solid #4cd814;
+    background: #fffff;
+}
+
+#del_button{
+    border-radius: 10px;
+    border: 2px solid #090909;
+    background: #fffff;
+}
+
+#pushButton_13 {
+    border-radius: 20px;
+    border: 2px solid #4cd814;
+    background: #fffff;
+}
+
+#pushButton_14 {
+    border-radius: 20px;
+    border: 2px solid #2596be;
+    background: #fffff;
+}
+
+#retour {
+    border-radius: 20px;
+    border: 2px solid #2596be;
+    background: #fffff;
+}
+#chatBot_2 {
+    border-radius: 20px;
+    border: 2px solid #2596be;
+    background: #fffff;
+}
+
+#label_24, #label_25, #label_26 {
+    color: #000;
+    border: #000;
+}
+
+#logo {
+    border-radius: 6px;
+    border: 3px solid #4cd814;
+    background: #fffff;
+}
+
+#sous {
+    background-color: #cecece;
+}
+
+#label_27, #label_28, #label_29, #label_30, #label_31, #label_32 {
+    border-radius: 1px;
+    border: 1px solid #ffffff;
+    color: #000;
+}
+
+#pushButton_17 {
+    background-color: #fefeff;
+    padding: 5px;
+    text-align: left;
+    border-top-left-radius: 20px;
+}
+
+#pushButton_22 {
+    color: #4cd814;
+}
+#pushButton_20 {
+    background-color: #fefeff;
+    padding: 5px;
+    text-align: left;
+    border-top-left-radius: 20px;
+}
+#pushButton_stat {
+    border-radius: 20px;
+    border: 2px solid #2596be;
+    background: #ffffff;
+}
+#logo_2 {
+    border-radius: 6px;
+    border: 3px solid #4cd814;
+    background: #fffff;
+}
+#pushButton_32{
+
+    color: #4cd814;
+
+}
+#pushButton_27{
+    background-color: #2596be;
+}
+#pushButton_28{
+    background-color: #2596be;
+}
+#pushButton_29{
+    background-color: #2596be;
+}
+#pushButton_20{
+    
+	background-color: #fefeff;
+    padding: 5px;
+    text-align: left;
+    border-top-left-radius: 20px;
+}
+#pushButton_30{
+    background-color: #2596be;
+}
+#pushButton_31{
+    background-color: #2596be;
+}
+#pushButton_32{
+    background-color: #2596be;
+} 
+#label_3 {
+    color: #000;
+    border: #000;
+}
+#label_22
+{
+	 background-color: #2596be;
+}</string>
+  </property>
+  <widget class="QWidget" name="leftmenu" native="true">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>200</width>
+     <height>601</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>100</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>200</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item>
+     <widget class="QFrame" name="frame_13">
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QFrame" name="frame_14">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <widget class="QFrame" name="frame_15">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>160</width>
+            <height>61</height>
+           </rect>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <widget class="QLabel" name="logo_2">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>10</y>
+             <width>51</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="image22.qrc">:/res/image22</pixmap>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_22">
+           <property name="geometry">
+            <rect>
+             <x>60</x>
+             <y>0</y>
+             <width>101</width>
+             <height>61</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>13</pointsize>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>MedicaPRO</string>
+           </property>
+          </widget>
+         </widget>
+         <widget class="QPushButton" name="pushButton_27">
+          <property name="geometry">
+           <rect>
+            <x>40</x>
+            <y>70</y>
+            <width>75</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Menu</string>
+          </property>
+          <property name="icon">
+           <iconset resource="image23.qrc">
+            <normaloff>:/res/icone23</normaloff>:/res/icone23</iconset>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_28">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>120</y>
+            <width>161</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+            <bold>true</bold>
+            <underline>false</underline>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(37, 150, 190);</string>
+          </property>
+          <property name="text">
+           <string>Employé</string>
+          </property>
+          <property name="icon">
+           <iconset resource="image27.qrc">
+            <normaloff>:/res/icone27</normaloff>:/res/icone27</iconset>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_29">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>170</y>
+            <width>111</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+            <bold>true</bold>
+            <underline>false</underline>
+           </font>
+          </property>
+          <property name="text">
+           <string>Médicaments</string>
+          </property>
+          <property name="icon">
+           <iconset resource="image26.qrc">
+            <normaloff>:/res/icone26</normaloff>:/res/icone26</iconset>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_30">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>270</y>
+            <width>101</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Ordonnances</string>
+          </property>
+          <property name="icon">
+           <iconset resource="image23.qrc">
+            <normaloff>:/res/icone23</normaloff>:/res/icone23</iconset>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_31">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>330</y>
+            <width>101</width>
+            <height>24</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Financières</string>
+          </property>
+          <property name="icon">
+           <iconset resource="image24.qrc">
+            <normaloff>:/res/icone24</normaloff>:/res/icone24</iconset>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_32">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>470</y>
+            <width>141</width>
+            <height>41</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Se déconnecter</string>
+          </property>
+          <property name="icon">
+           <iconset resource="image30.qrc">
+            <normaloff>:/res/icone30</normaloff>:/res/icone30</iconset>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_20">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>220</y>
+            <width>161</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <italic>true</italic>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Fournisseurs</string>
+          </property>
+          <property name="icon">
+           <iconset resource="image25.qrc">
+            <normaloff>:/res/icone25</normaloff>:/res/icone25</iconset>
+          </property>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="mainbody" native="true">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>0</y>
+     <width>1421</width>
+     <height>711</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <bold>false</bold>
+    </font>
+   </property>
+   <widget class="QWidget" name="widget_4" native="true">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>671</width>
+      <height>50</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>400</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>800</width>
+      <height>135</height>
+     </size>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_12">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QWidget" name="widget_10" native="true">
+       <layout class="QHBoxLayout" name="horizontalLayout_13">
+        <property name="spacing">
+         <number>7</number>
+        </property>
+        <property name="leftMargin">
+         <number>10</number>
+        </property>
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <property name="rightMargin">
+         <number>10</number>
+        </property>
+        <property name="bottomMargin">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="pushButton_7">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="image.qrc">
+            <normaloff>:/res/icone1.jog.png</normaloff>:/res/icone1.jog.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>50</width>
+            <height>50</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_13">
+          <property name="minimumSize">
+           <size>
+            <width>10</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="image2.qrc">:/res/icone7</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>false</bool>
+          </property>
+          <property name="wordWrap">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QWidget" name="widget_11" native="true">
+       <property name="maximumSize">
+        <size>
+         <width>553</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_14">
+        <property name="leftMargin">
+         <number>9</number>
+        </property>
+        <property name="topMargin">
+         <number>9</number>
+        </property>
+        <item>
+         <widget class="QFrame" name="frame_5">
+          <property name="minimumSize">
+           <size>
+            <width>250</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_15">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_14">
+             <property name="maximumSize">
+              <size>
+               <width>30</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="pixmap">
+              <pixmap resource="image.qrc">:/res/icone2.jpg.png</pixmap>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="lineEdit_11">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="placeholderText">
+              <string>Recherche</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QWidget" name="widget_12" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>0</height>
+        </size>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_16">
+        <property name="spacing">
+         <number>9</number>
+        </property>
+        <property name="leftMargin">
+         <number>50</number>
+        </property>
+        <property name="topMargin">
+         <number>9</number>
+        </property>
+        <property name="rightMargin">
+         <number>9</number>
+        </property>
+        <property name="bottomMargin">
+         <number>9</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="pushButton_8">
+          <property name="minimumSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="image.qrc">
+            <normaloff>:/res/icone4.jpg.png</normaloff>:/res/icone4.jpg.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_19">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="image20.qrc">
+            <normaloff>:/res/icone20</normaloff>:/res/icone20</iconset>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QPushButton" name="pushButton_stat">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>71</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset resource="image7.qrc">
+      <normaloff>:/res/icone11</normaloff>:/res/icone11</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_27">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>60</y>
+      <width>51</width>
+      <height>91</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap resource="image16.qrc">:/res/icone16</pixmap>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_28">
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>70</y>
+      <width>49</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap resource="image18.qrc">:/res/icone18</pixmap>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_30">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>110</y>
+      <width>101</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Statistiques</string>
+    </property>
+   </widget>
+   <widget class="QStackedWidget" name="stackedWidgetStat">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>150</y>
+      <width>661</width>
+      <height>411</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="page_3"/>
+    <widget class="QWidget" name="page_4">
+     <widget class="QPushButton" name="retour_2">
+      <property name="geometry">
+       <rect>
+        <x>290</x>
+        <y>340</y>
+        <width>75</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Retour</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+ </widget>
+ <resources>
+  <include location="image2.qrc"/>
+  <include location="image7.qrc"/>
+  <include location="image22.qrc"/>
+  <include location="image23.qrc"/>
+  <include location="image24.qrc"/>
+  <include location="image25.qrc"/>
+  <include location="image18.qrc"/>
+  <include location="image27.qrc"/>
+  <include location="image20.qrc"/>
+  <include location="image.qrc"/>
+  <include location="image30.qrc"/>
+  <include location="image16.qrc"/>
+  <include location="image26.qrc"/>
+ </resources>
+ <connections/>
+</ui>
