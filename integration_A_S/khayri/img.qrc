@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/res">
+        <file>icone1.jog.png</file>
+    </qresource>
+</RCC>
