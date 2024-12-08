@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/new/ring">
+        <file>images2ring.png</file>
+    </qresource>
+</RCC>
