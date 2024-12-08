@@ -40,9 +40,10 @@ public:
     bool supprimer(QString);
     bool modifier();
     bool reset();
-    QSqlQueryModel* rechercher(QString id);
+    QSqlQueryModel* rechercher(QString Id);
+    QSqlQueryModel* rechercherd(QDate datep);
+    QSqlQueryModel* rechercherp(QString ModePaiment);
     QSqlQueryModel* trier();
-    bool existe(const QString& id);
 };
 
 #endif // TRANSACTION_H

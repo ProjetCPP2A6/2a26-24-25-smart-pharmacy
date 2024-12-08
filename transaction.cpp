@@ -109,10 +109,10 @@ bool transaction::ajouter() {
     }
     QSqlQuery query;
 
-    query.prepare("INSERT INTO transaction (id_trans, type, description, categorie, modepaiment, datep, prix) "
-                  "VALUES (:id_trans, :type, :description, :categorie, :modepaiment, :datep, :prix)");
+    query.prepare("INSERT INTO transaction (id, type, description, categorie, modepaiment, datep, prix) "
+                  "VALUES (:id, :type, :description, :categorie, :modepaiment, :datep, :prix)");
 
-    query.bindValue(":id_trans", id);
+    query.bindValue(":id", id);
     query.bindValue(":type", type);
     query.bindValue(":description", description);
     query.bindValue(":categorie", categorie);
@@ -127,7 +127,7 @@ QSqlQueryModel* transaction::afficher() {
     QSqlQueryModel *model = new QSqlQueryModel();
 
 
-    model->setQuery("SELECT id_trans, type, description, categorie, modepaiment, "
+    model->setQuery("SELECT id, type, description, categorie, modepaiment, "
                     "TO_CHAR(datep, 'YYYY-MM-DD') AS datep, "
                     "TO_CHAR(prix, 'FM99999999.00') AS prix FROM transaction");
 
@@ -147,7 +147,7 @@ bool transaction::modifier() {
     QSqlQuery query;
 
     query.prepare("UPDATE transaction SET type = :type, description = :description, categorie = :categorie, "
-                  "modepaiment = :modepaiment, datep = :datep, prix = :prix WHERE id_trans = :id_trans");
+                  "modepaiment = :modepaiment, datep = :datep, prix = :prix WHERE id = :id");
 
     query.bindValue(":type", type);
     query.bindValue(":description", description);
@@ -155,15 +155,15 @@ bool transaction::modifier() {
     query.bindValue(":modepaiment", modepaiment);
     query.bindValue(":datep", datep);
     query.bindValue(":prix", prix);
-    query.bindValue(":id_trans", id);
+    query.bindValue(":id", id);
 
     return query.exec();
 }
 
 bool transaction::supprimer(QString transactionId) {
     QSqlQuery query;
-    query.prepare("SELECT COUNT(*) FROM transaction WHERE id_trans = :id_trans");
-    query.bindValue(":id_trans", transactionId);
+    query.prepare("SELECT COUNT(*) FROM transaction WHERE id = :id");
+    query.bindValue(":id", transactionId);
 
     if (!query.exec()) {
         // Si la requête échoue, afficher l'erreur
@@ -179,8 +179,8 @@ bool transaction::supprimer(QString transactionId) {
     }
 
     // Si la transaction existe, procéder à la suppression
-    query.prepare("DELETE FROM transaction WHERE id_trans = :id_trans");
-    query.bindValue(":id_trans", transactionId);
+    query.prepare("DELETE FROM transaction WHERE id = :id");
+    query.bindValue(":id", transactionId);
 
     if (query.exec()) {
         QMessageBox::information(nullptr, "Succès", "La transaction a été supprimée avec succès.");
@@ -201,8 +201,8 @@ bool transaction::reset() {
 }
 QSqlQueryModel* transaction::rechercher(QString id) {
     QSqlQuery query;
-    query.prepare("SELECT * FROM transaction WHERE id_trans = :id_trans"); // Ensure placeholder matches bindValue key
-    query.bindValue(":id_trans", id);
+    query.prepare("SELECT * FROM transaction WHERE id = :id"); // Ensure placeholder matches bindValue key
+    query.bindValue(":id", id);
 
     // Execute the query
     if (!query.exec()) {
@@ -217,6 +217,55 @@ QSqlQueryModel* transaction::rechercher(QString id) {
 
     return model;
 }
+QSqlQueryModel* transaction::rechercherd(QDate date) {
+    if (!QSqlDatabase::database().isOpen()) {
+        qDebug() << "Erreur : La connexion à la base de données est fermée.";
+        return nullptr;
+    }
+
+    QSqlQuery query;
+    query.prepare("SELECT * FROM transaction WHERE date = TO_DATE(:datep, 'YYYY-MM-DD')");
+    query.bindValue(":datep", date.toString("yyyy-MM-dd"));
+
+
+    if (!query.exec()) {
+        qDebug() << "Échec de l'exécution de la requête:" << query.lastError().text();
+        return nullptr;
+    }
+
+    QSqlQueryModel* model = new QSqlQueryModel();
+    model->setQuery(query);
+
+    if (model->lastError().isValid()) {
+        qDebug() << "Erreur dans le modèle de requête :" << model->lastError().text();
+        delete model;
+        return nullptr;
+    }
+
+    return model;
+}
+
+QSqlQueryModel* transaction::rechercherp(QString modepaiment) {
+    QSqlQuery query;
+
+    // Prepare the query for searching by payment mode
+    query.prepare("SELECT * FROM transaction WHERE modepaiement = :modepaiement");
+    query.bindValue(":modepaiement", modepaiment);
+
+    // Execute the query
+    if (!query.exec()) {
+        qDebug() << "Query execution failed:" << query.lastError().text();
+        return nullptr;
+    }
+
+    // Create a new model to hold the results
+    QSqlQueryModel* model = new QSqlQueryModel();
+    model->setQuery(query);
+
+    return model;
+}
+
+
 QSqlQueryModel* transaction::trier() {
     QSqlQuery query;
     query.prepare("SELECT * FROM transaction ORDER BY type ASC, prix ASC");
@@ -234,14 +283,3 @@ QSqlQueryModel* transaction::trier() {
 
     return model;
 }
-
-bool transaction::existe(const QString& id) {
-    QSqlQuery query;
-    query.prepare("SELECT COUNT(*) FROM transaction WHERE id_trans = :id_trans");
-    query.bindValue(":id_trans", id);
-    if (query.exec() && query.next()) {
-        return query.value(0).toInt() > 0; // Retourne vrai si au moins une ligne existe
-    }
-    return false; // En cas d'erreur ou d'ID inexistant
-}
-

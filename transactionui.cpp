@@ -33,6 +33,8 @@ transactionUI::transactionUI(QWidget *parent)
     , ui(new Ui::transactionUI)
 {
     ui->setupUi(this);
+    a.connect_arduino();
+    a.read_from_arduino();
 }
 
 transactionUI::~transactionUI()
@@ -71,13 +73,19 @@ void transactionUI::on_ajouter_clicked()
     QString modepaiment = ui->modepaiment->text();
 
     transaction t(id, type, description, categorie, modepaiment, date, montant);
-
+    bool test = false;
+    test = handleArduinoData();
+    if(test)
+    {
     if (t.ajouter()) {
+        QMessageBox::information(this, "Permission", "Bonne carte merci!");
         sendTransactionEmail(id, montant, type, description, date);
         ui->tableView->setModel(t.afficher());
-        QMessageBox::information(this, "Succès", "La transaction a été ajoute avec succès.");
     } else {
-        QMessageBox::critical(this, "Erreur", "Échec de l'ajout de la transaction.");
+        QMessageBox::critical(this, "Error", "Failed to add transaction.");
+    }
+    }else {
+        QMessageBox::critical(this, "Permission Error", "Passer la carte avant pour confirmer !");
     }
 
 }
@@ -98,47 +106,42 @@ void transactionUI::on_editer_clicked()
     if (t.modifier()) {
         sendEditedTransactionEmail(id, montant, type, description, date);
         ui->tableView->setModel(t.afficher());
-        QMessageBox::information(this, "Succès", "La transaction a été mise à jour avec succès.");
     } else {
-        QMessageBox::critical(this, "Erreur", "Échec de la mise à jour de la transaction.");
+        QMessageBox::critical(this, "Error", "Failed to update transaction.");
     }
 
 }
 
-void transactionUI::on_supp_clicked() {
-    QString id = ui->idsupp->text();
-
-
-
+void transactionUI::on_supp_clicked()
+{
     transaction t1;
-
-    // Vérifier si l'ID existe dans la base de données
-    if (!t1.existe(id)) {
-        QMessageBox::critical(this, "Erreur", "Aucune transaction trouvée avec cet ID.");
-        return;
-    }
-
-    // Supprimer la transaction
-   else if (t1.supprimer(id)) {
-        QMessageBox::information(this, "Succès", "La transaction a été supprimée avec succès.");
-        // Rafraîchir le tableau
-        ui->tableView->setModel(t1.afficher());
-    } else {
-        QMessageBox::critical(this, "Erreur", "Échec de la suppression de la transaction.");
-    }
+    t1.setId(ui->idsupp->text());
+    t1.supprimer(t1.getId());
+    ui->tableView->setModel(t.afficher());
 }
-
 void transactionUI::on_pushButton_clicked() {
     QString id = ui->linrech->text();
+    QDate date = ui->daterech->date();
+    QString modepaiment = ui->mdprech->text();
     transaction res;
-    QSqlQueryModel* model = res.rechercher(id);
+    QSqlQueryModel* model = nullptr;
+
+    // Combine search results into a single model
+    if (!id.isEmpty()) {
+        model = res.rechercher(id);
+    } else if (date.isValid()) {
+        model = res.rechercherd(date);
+    } else if (!modepaiment.isEmpty()) {
+        model = res.rechercherp(modepaiment);
+    }
 
     if (model && model->rowCount() > 0) {
         ui->tableView->setModel(model);
     } else {
-        QMessageBox::information(this, "Not Found", "Aucune transaction trouvée avec cet ID.");
-        delete model;
+        QMessageBox::information(this, "Not Found", "No transaction found with the given criteria.");
+        delete model; // Clean up memory if model is unused
     }
+
 }
 void transactionUI::on_pushButton_2_clicked() {
     transaction res;
@@ -147,130 +150,203 @@ void transactionUI::on_pushButton_2_clicked() {
     if (model && model->rowCount() > 0) {
         ui->tableView->setModel(model);
     } else {
-        QMessageBox::information(this, "Not Found", "Aucune transaction trouvée avec cet ID.");
+        QMessageBox::information(this, "Not Found", "No transaction found with that ID.");
         delete model;
     }
 }
 void transactionUI::on_pushButton_14_clicked() {
-    QBarSet *set = new QBarSet("transaction");
+    // Utilisation de la connexion existante
+    QSqlDatabase db = QSqlDatabase::database(); // Récupère la connexion par défaut
+    if (!db.isOpen()) {
+        QMessageBox::critical(this, "Database Error", "Database connection is not open.");
+        return;
+    }
 
-    // Example data: Replace these values with actual data from your database
-    *set << 10 << 20 << 15 << 25 << 18; // Example: transaction in different months
+    // Requête pour récupérer les données des transactions par mois
+    QSqlQuery query;
+    if (!query.exec("SELECT TO_CHAR(datep, 'Month') AS month, COUNT(*) AS transaction_count, TO_CHAR(datep, 'MM') AS month_number FROM transaction GROUP BY TO_CHAR(datep, 'Month'), TO_CHAR(datep, 'MM') ORDER BY TO_CHAR(datep, 'MM')")) {
+        QMessageBox::critical(this, "Query Error", "Failed to execute query: " + query.lastError().text());
+        return;
+    }
 
-    // Find the maximum value for the Y-axis range
+    // Liste des mois dans l'ordre
+    QStringList monthsOrdered = {
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    };
+
+    // Préparer les données pour le graphique
+    QMap<QString, int> transactionsByMonth; // Map pour stocker les transactions par mois
+    while (query.next()) {
+        QString month = query.value("month").toString().trimmed(); // Mois (nom)
+        int count = query.value("transaction_count").toInt(); // Nombre de transactions
+        transactionsByMonth[month] = count; // Stocker les données
+    }
+
+    QBarSet *set = new QBarSet("Transactions");
+    QStringList visibleMonths; // Mois visibles sur l'axe X
     double maxValue = 0;
-    for (int i = 0; i < set->count(); ++i) {
-        double value = set->at(i);
-        if (value > maxValue) {
-            maxValue = value;
+
+    // Ajouter les données dans l'ordre des mois
+    for (const QString &month : monthsOrdered) {
+        int count = transactionsByMonth.value(month, 0); // Valeur par défaut 0 si mois non trouvé
+        *set << count;
+        visibleMonths.append(month);
+        if (count > maxValue) {
+            maxValue = count; // Mettre à jour la valeur maximale
         }
     }
 
-    // Create a bar series and add the set
+    // Créer une série de barres
     QBarSeries *series = new QBarSeries();
     series->append(set);
 
-    // Create the chart and add the series
+    // Créer le graphique
     QChart *chart = new QChart();
     chart->addSeries(series);
     chart->setTitle("Transactions Statistics");
 
-    // Create Y-axis based on the max value from the dataset
+    // Axe Y
     QValueAxis *axisY = new QValueAxis();
-    axisY->setRange(0, maxValue + 5); // Add some padding above max value
-    axisY->setTitleText("Number of transaction");
+    axisY->setRange(0, maxValue + 5); // Ajouter un peu de marge
+    axisY->setTitleText("Number of Transactions");
     chart->addAxis(axisY, Qt::AlignLeft);
     series->attachAxis(axisY);
 
-    // Create X-axis with categories (replace with your actual categories)
+    // Axe X
     QCategoryAxis *axisX = new QCategoryAxis();
-    axisX->append("January", 0);
-    axisX->append("February", 1);
-    axisX->append("March", 2);
-    axisX->append("April", 3);
-    axisX->append("May", 4);
+    for (int i = 0; i < visibleMonths.size(); ++i) {
+        axisX->append(visibleMonths[i], i); // Ajouter les mois dans l'ordre
+    }
     axisX->setTitleText("Months");
     chart->addAxis(axisX, Qt::AlignBottom);
     series->attachAxis(axisX);
 
-    // Create chart view
+    // Ajouter les labels pour les nombres de transactions au-dessus des barres
     QChartView *chartView = new QChartView(chart);
+    for (int i = 0; i < visibleMonths.size(); ++i) {
+        int value = (*set)[i];
+        QGraphicsSimpleTextItem *label = new QGraphicsSimpleTextItem(QString::number(value));
+        QPointF position = chart->mapToPosition(QPointF(i, value), series);
+        label->setPos(position.x() - 10, position.y() - 20); // Ajuster la position pour centrer au-dessus
+        chart->scene()->addItem(label);
+    }
+
+    // Afficher le graphique dans une boîte de dialogue
     chartView->setRenderHint(QPainter::Antialiasing);
 
-    // Create a new dialog to display the chart
     QDialog *chartDialog = new QDialog(this);
     chartDialog->setWindowTitle("Transactions Statistics");
-
-    // Set layout for the dialog and add the chart view
     QVBoxLayout *layout = new QVBoxLayout(chartDialog);
     layout->addWidget(chartView);
     chartDialog->setLayout(layout);
-
-    // Set a fixed size for the dialog, or use resize if you want adjustable size
-    chartDialog->resize(600, 400); // Adjust the size as desired
-
-    // Show the dialog
+    chartDialog->resize(1200, 600);
     chartDialog->exec();
 }
 
 
+
+
+
 void transactionUI::on_pushButton_13_clicked() {
-    connect(ui->pushButton_13, &QPushButton::clicked, this, &transactionUI::on_pushButton_13_clicked);
     qDebug() << "Export Button clicked";
 
-    // 1. Choose a location and file name for the PDF
-    QString listofcomplaints = QFileDialog::getSaveFileName(this, "Save PDF", "", "*.pdf");
-    if (listofcomplaints.isEmpty()) {
-        return; // User canceled the dialog
-    }
+    // 1. Choisir l'emplacement et nom du fichier PDF
+    QString filePath = QFileDialog::getSaveFileName(this, "Save PDF", "", "*.pdf");
+    if (filePath.isEmpty()) return;
+    if (!filePath.endsWith(".pdf", Qt::CaseInsensitive)) filePath += ".pdf";
 
-    // Add ".pdf" if the user did not specify it
-    if (!listofcomplaints.endsWith(".pdf", Qt::CaseInsensitive)) {
-        listofcomplaints += ".pdf";
-    }
-
-    // 2. Create a QPdfWriter instance
-    QPdfWriter pdfWriter(listofcomplaints);
+    // 2. Initialiser QPdfWriter et QPainter
+    QPdfWriter pdfWriter(filePath);
     pdfWriter.setPageSize(QPageSize(QPageSize::A4));
-    pdfWriter.setPageMargins(QMargins(30, 30, 30, 30)); // Adjust margins as needed
-
-    // 3. Set up QPainter for drawing on the PDF
+    pdfWriter.setPageMargins(QMargins(30, 30, 30, 30));
     QPainter painter(&pdfWriter);
-    painter.setPen(Qt::black);
 
-    // Optional: Add a title or header
-    QFont titleFont("Arial", 16, QFont::Bold);
-    painter.setFont(titleFont);
-    painter.drawText(100, 100, "La Liste Des Transactions"); // Position (x, y) and text content
-
-    // Optional: Add a timestamp
-    QFont dateFont("Arial", 10);
-    painter.setFont(dateFont);
-    QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-    painter.drawText(4000, 100, "Generated on: " + timestamp);
-
-    QFont dataFont("Arial", 10);
-    painter.setFont(dataFont);
-
-    int rowHeight = 300;
-    int xPos = 100;
-    int yPos = 300;
+    int xStart = 50;
+    int yStart = 300;
+    int rowHeight = 200;
+    int colWidth = 1200;
+    int currentY = yStart;
 
     QAbstractItemModel *model = ui->tableView->model();
-    for (int row = 0; row < model->rowCount(); ++row) {
-        xPos = 100;
-        for (int col = 0; col < model->columnCount(); ++col) {
-            QString cellData = model->data(model->index(row, col)).toString();
-            painter.drawText(xPos, yPos, cellData);
-            xPos += 1000; // Adjust column width as needed
-        }
-        yPos += rowHeight; // Move to the next row
+    if (!model) {
+        QMessageBox::warning(this, "Export Failed", "No data available in the table.");
+        return;
     }
 
-    // 5. End the painting and save the PDF
-    painter.end();
+    // Polices
+    QFont titleFont("Times New Roman", 20, QFont::Bold);
+    QFont headerFont("Arial", 12, QFont::Bold);
+    QFont dataFont("Arial", 10);
 
-    // Optional: Confirm successful export
+    // Dessiner le titre principal
+    painter.setFont(titleFont);
+    painter.drawText(xStart, 150, "Liste des Transactions par Mois");
+
+    // Grouper les données par mois
+    QMap<QString, QList<QList<QString>>> transactionsByMonth;
+    for (int row = 0; row < model->rowCount(); ++row) {
+        QString dateStr = model->data(model->index(row, 5)).toString();
+        QDate date = QDate::fromString(dateStr, "yyyy-MM-dd");
+        QString month = date.toString("MMMM yyyy");
+
+        QList<QString> rowData;
+        for (int col = 0; col < model->columnCount(); ++col) {
+            rowData.append(model->data(model->index(row, col)).toString());
+        }
+        transactionsByMonth[month].append(rowData);
+    }
+
+    // Définir les couleurs
+    QColor headerColor(200, 200, 250);  // Violet clair pour les en-têtes
+    QColor rowColor1(240, 240, 240);    // Gris clair pour les lignes impaires
+    QColor rowColor2(255, 255, 255);    // Blanc pour les lignes paires
+    QColor borderColor(0, 0, 0);        // Noir pour les bordures
+
+    // Dessiner les données regroupées par mois
+    for (auto month : transactionsByMonth.keys()) {
+        // Dessiner le titre du mois
+        painter.setFont(headerFont);
+        painter.drawText(xStart, currentY, month);
+        currentY += rowHeight;
+
+        // Dessiner l'en-tête avec fond coloré
+        painter.fillRect(xStart, currentY, model->columnCount() * colWidth, rowHeight, headerColor);
+        painter.setPen(Qt::black);
+        painter.drawRect(xStart, currentY, model->columnCount() * colWidth, rowHeight);
+
+        for (int col = 0; col < model->columnCount(); ++col) {
+            QString headerText = model->headerData(col, Qt::Horizontal).toString();
+            painter.drawText(xStart + col * colWidth + 20, currentY + rowHeight / 2, headerText);
+        }
+        currentY += rowHeight;
+
+        // Dessiner les lignes de données
+        painter.setFont(dataFont);
+        for (int i = 0; i < transactionsByMonth[month].size(); ++i) {
+            QList<QString> rowData = transactionsByMonth[month][i];
+
+            // Alterner les couleurs de fond
+            QColor rowColor = (i % 2 == 0) ? rowColor1 : rowColor2;
+            painter.fillRect(xStart, currentY, model->columnCount() * colWidth, rowHeight, rowColor);
+
+            // Dessiner chaque cellule
+            for (int col = 0; col < rowData.size(); ++col) {
+                painter.drawRect(xStart + col * colWidth, currentY, colWidth, rowHeight); // Bordure
+                painter.drawText(xStart + col * colWidth + 20, currentY + rowHeight / 2, rowData[col]);
+            }
+            currentY += rowHeight;
+
+            // Gérer le passage à une nouvelle page
+            if (currentY > pdfWriter.height() - 300) {
+                pdfWriter.newPage();
+                currentY = yStart;
+            }
+        }
+        currentY += rowHeight; // Espace après chaque mois
+    }
+
+    painter.end();
     QMessageBox::information(this, "Export Successful", "PDF file has been successfully created.");
 }
 
@@ -484,19 +560,18 @@ void transactionUI::sendEditedTransactionEmail(const QString &id, float montant,
         return fileName + ".png";
     }
 
-void transactionUI::captureWindowAndSave()
+/*void transactionUI::captureWindowAndSave()
     {
         QString fileName = generateRandomImageName();
-        QString filePath = "C:/Users/sarra/Desktop/interfaceSarra/capture/" + fileName;
+        QString filePath = "C:/Users/mehdi/OneDrive/Desktop/newProject/interfaceges/interfaceSarra/capture/" + fileName;
 
         QPixmap screenshot = this->grab();
 
         if (screenshot.save(filePath)) {
             qDebug() << "Screenshot saved successfully to " << filePath;
-            QMessageBox::information(this, "Succès", "Capture d'écran enregistrée avec succès..");
         } else {
             qDebug() << "Failed to save screenshot to " << filePath;
-            QMessageBox::critical(this, "Error", "Échec de l'enregistrement de la capture d'écran.");
+            QMessageBox::critical(this, "Error", "Failed to save screenshot.");
         }
     }
 
@@ -504,5 +579,51 @@ void transactionUI::captureWindowAndSave()
 void transactionUI::on_captureButton_clicked()
 {
     captureWindowAndSave();
+}*/
+
+bool transactionUI::handleArduinoData()
+{
+    QDateTime PassTime = QDateTime::currentDateTime();
+    static QByteArray buffer;
+
+    QByteArray data = a.read_from_arduino();
+
+    if (!data.isEmpty()) {
+            if (data == "Authorized\r\n") {
+                QSqlQuery query;
+                query.prepare("INSERT INTO refid (time, status) VALUES (:time, :status)");
+                query.bindValue(":time", PassTime.toString("HH:mm:ss"));
+                query.bindValue(":status", "Authorized Card");
+                qDebug() << "ok";
+                if (!query.exec()) {
+                    qDebug() << "Failed to insert start event into database:" << query.lastError();
+                return true;
+                }
+            } else if (data == "Refused\r\n") {
+                QSqlQuery query;
+                query.prepare("INSERT INTO refid (time, status) VALUES (:time, :status)");
+                query.bindValue(":time", PassTime.toString("HH:mm:ss"));
+                query.bindValue(":status", "Refused Card");
+                qDebug() << "ok";
+                if (!query.exec()) {
+                    qDebug() << "Failed to insert start event into database:" << query.lastError();
+                }
+                return false;
+            }
+    }else {return false;}
+
+    }
+
+void transactionUI::on_pushButton_5_clicked()
+{
+    a.close_arduino();
+    a.connect_arduino();
+}
+
+
+void transactionUI::on_pushButton_6_clicked()
+{
+    CalendarDialog Cd;
+    Cd.exec();
 }
 
